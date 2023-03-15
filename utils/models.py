@@ -1,4 +1,5 @@
-from peewee import SqliteDatabase, Model, IntegerField, CharField, DateTimeField, BigIntegerField
+from peewee import SqliteDatabase, Model, IntegerField, CharField, DateTimeField, BigIntegerField, BooleanField
+from peewee import ForeignKeyField
 
 database = SqliteDatabase('self_bot.db')
 
@@ -8,8 +9,19 @@ class BaseModel(Model):
         database = database
 
 
+class User(BaseModel):
+    user_id = BigIntegerField(primary_key=True)
+    under_supervision = BooleanField(default=False)
+
+    @classmethod
+    def insert_user(cls, user_id, under_supervision):
+        q = cls.insert(user_id=user_id, under_supervision=under_supervision).on_conflict_ignore(ignore=True)
+        q.execute()
+        return True
+
+
 class MessageInfo(BaseModel):
-    user_id = BigIntegerField()
+    user_id = ForeignKeyField(User, User.user_id, on_delete="CASCADE")
     message_id = BigIntegerField()
     full_name = CharField(max_length=100)
     message_text = CharField(max_length=2000)
@@ -24,7 +36,7 @@ class MessageInfo(BaseModel):
 
 
 class ChannelTargetInfo(BaseModel):
-    user_id = BigIntegerField()
+    user_id = ForeignKeyField(User, User.user_id, on_delete="CASCADE")
     channel_id = BigIntegerField()
 
     @classmethod
