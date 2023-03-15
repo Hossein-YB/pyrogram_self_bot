@@ -1,7 +1,7 @@
 # local
 account_info.py
 *.session*
-DataFile
+media
 *.db
 .idea
 .idea/

@@ -18,7 +18,8 @@ class Messages:
 """
     channel_ready = "✍🏼کانال از قبل اماده است ربات فعال شد🦾"
     unsupervised = "کاربر از نظارت خارج شد"
-    image_saved = "عکس ذخیره شد"
+    image_saved = "عکس ذخیره شد🔐"
+    video_saved = "ویدیو ذخیره شد🔐"
 
     git_url = r"https://github.com/Hossein-YB"
     text_url = f"[👻] {git_url} \n🆔 @housing_yaghoubii"
