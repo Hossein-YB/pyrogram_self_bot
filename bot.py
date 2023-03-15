@@ -1,6 +1,7 @@
 from pyrogram import Client, filters, types
 from pyrogram.errors import SessionPasswordNeeded
-import os
+
+from os import remove
 
 from texts import Messages
 from account_info import API_ID, API_HASH, PHONE
@@ -61,6 +62,26 @@ async def message_user(clt: app, msg: types.Message):
     datetime = msg.date
     MessageInfo.insert_message(user_id=chat_id, message_id=message_id, full_name=first_name,
                                message_text=text, datetime=datetime)
+
+
+@app.on_message(filters.photo)
+@user_is_under_supervision
+async def save_timed_photo(clt: app, msg: types.Message):
+    channel = ChannelTargetInfo.get_or_none(ChannelTargetInfo.user_id == msg.from_user.id)
+    try:
+        if msg.photo.ttl_seconds:
+            if channel is not None:
+                file_info = await app.download_media(msg, "media\\")
+                user_info = await app.get_users(msg.from_user.id)
+                print(file_info)
+                if "jpg" in file_info:
+                    await app.send_media_group(channel.channel_id, [
+                        types.InputMediaPhoto(file_info, caption=msg_text.image_saved)
+                    ])
+                remove(file_info)
+
+    except Exception as error:
+        await app.send_message(chat_id=channel.channel_id, text=str(error.args))
 
 
 
