@@ -19,6 +19,14 @@ class User(BaseModel):
         q.execute()
         return True
 
+    @classmethod
+    def get_supervision(cls, user_id):
+        user = cls.get_or_none(cls.user_id == user_id)
+        if user is not None:
+            return user.under_supervision
+        else:
+            return False
+
 
 class MessageInfo(BaseModel):
     user_id = ForeignKeyField(User, User.user_id, on_delete="CASCADE")
@@ -41,7 +49,8 @@ class ChannelTargetInfo(BaseModel):
 
     @classmethod
     def insert_channel(cls, user_id, channel_id):
-        cls.insert(user_id=user_id, channel_id=channel_id, ).on_conflict_ignore(ignore=True)
+        q = cls.insert(user_id=user_id, channel_id=channel_id, ).on_conflict_ignore(ignore=True)
+        q.execute()
         return True
 
     @classmethod
