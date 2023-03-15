@@ -50,5 +50,19 @@ async def unsupervised(clt: app, msg: types.Message):
         await app.send_message(channel.channel_id, msg_text.unsupervised)
 
 
+@app.on_message(filters.private & filters.text)
+@user_is_under_supervision
+async def message_user(clt: app, msg: types.Message):
+    print(msg)
+    text = msg.text
+    chat_id = msg.from_user.id
+    message_id = msg.id
+    first_name = msg.chat.first_name
+    datetime = msg.date
+    MessageInfo.insert_message(user_id=chat_id, message_id=message_id, full_name=first_name,
+                               message_text=text, datetime=datetime)
+
+
+
 if __name__ == "__main__":
     app.run()
