@@ -116,7 +116,7 @@ async def update_message_user(clt: app, msg: types.Message):
         get_message_info = MessageInfo.get(MessageInfo.message_id == msg.id)
         if get_message_info is not None:
             if channel is not None and get_message_info.message_text != msg.text:
-                await app.send_message(channel.channel_id,msg_text.find_update_message.format(
+                await app.send_message(channel.channel_id, msg_text.find_update_message.format(
                         get_message_info.full_name, get_message_info.datetime, get_message_info.message_text))
 
     except Exception as error:
