@@ -32,7 +32,7 @@ class MessageInfo(BaseModel):
     user_id = ForeignKeyField(User, User.user_id, on_delete="CASCADE")
     message_id = BigIntegerField()
     full_name = CharField(max_length=100)
-    message_text = CharField(max_length=2000)
+    message_text = CharField(max_length=2000, null=True)
     datetime = DateTimeField()
 
     @classmethod
@@ -69,6 +69,21 @@ class MediaMessage(BaseModel):
         q = cls.insert(message_id=message_id, media_type=media_type, file_id=file_id, caption=caption,)
         q.execute()
         return True
+
+    @classmethod
+    def get_media(cls, msg_id):
+        msg = cls.get_or_none(cls.message_id == msg_id)
+        if msg is not None:
+            return msg
+        else:
+            return False
+
+    @classmethod
+    def delete_media(cls, rec_id):
+        try:
+            cls.delete_by_id(rec_id)
+        except Exception as error:
+            print(error.args)
 
 
 class ChannelTargetInfo(BaseModel):

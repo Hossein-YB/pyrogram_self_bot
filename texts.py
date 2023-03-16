@@ -36,6 +36,7 @@ class Messages:
 متن پیام: {}
 
 """
+    find_deleted_media = "یک رسانه حذف شده پیدا شد "
 
     git_url = r"https://github.com/Hossein-YB"
     text_url = f"[👻] {git_url} \n🆔 @housing_yaghoubii"

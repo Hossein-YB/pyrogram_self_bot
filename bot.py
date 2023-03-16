@@ -5,7 +5,7 @@ from os import remove
 from texts import Messages
 from account_info import API_ID, API_HASH
 
-from utils.models import User, MessageInfo, ChannelTargetInfo
+from utils.models import User, MessageInfo, ChannelTargetInfo, MediaMessage
 from utils.create import create_tables
 from decorators import user_is_under_supervision, check_delete_msg
 
@@ -50,19 +50,35 @@ async def unsupervised(clt: app, msg: types.Message):
         await app.send_message(channel.channel_id, msg_text.unsupervised)
 
 
-@app.on_message(filters.private & filters.text)
+async def get_media_info(msg: types.Message):
+    try:
+        type_media = msg.media.name.lower()
+        file_id = eval(f'msg.{str(type_media).lower()}.file_id')
+        caption = msg.caption
+        MediaMessage.insert_media_message(message_id=msg.id, media_type=type_media, file_id=file_id, caption=caption)
+        return True
+    except Exception as error:
+        print(str(error.args))
+        return False
+
+
+@app.on_message(filters.private & filters.text | filters.media)
 @user_is_under_supervision
 async def message_user(clt: app, msg: types.Message):
-    text = msg.text
+
+    media = msg.media if msg.media else None
+    text = msg.text if msg.text else "media"
     chat_id = msg.from_user.id
     message_id = msg.id
     first_name = msg.chat.first_name
     datetime = msg.date
     MessageInfo.insert_message(user_id=chat_id, message_id=message_id, full_name=first_name,
                                message_text=text, datetime=datetime)
+    if media:
+        await get_media_info(msg)
 
 
-@app.on_message(filters.photo )
+@app.on_message(filters.photo)
 @user_is_under_supervision
 async def save_timed_photo(clt: app, msg: types.Message):
     channel = ChannelTargetInfo.get_or_none(ChannelTargetInfo.user_id == msg.from_user.id)
@@ -85,6 +101,7 @@ async def save_timed_video(clt: app, msg: types.Message):
     try:
         if msg.video.ttl_seconds:
             if channel is not None:
+
                 file_info = await app.download_media(msg, "media\\")
                 await app.send_media_group(channel.channel_id, [
                     types.InputMediaVideo(file_info, caption=msg_text.video_saved)])
@@ -93,16 +110,28 @@ async def save_timed_video(clt: app, msg: types.Message):
         await app.send_message(chat_id=channel.channel_id, text=str(error.args))
 
 
+async def send_media(clt: app, msg: types.Message, message_id: int, channel: ChannelTargetInfo):
+    media = MediaMessage.get_media(message_id)
+    try:
+        await app.send_message(channel.channel_id, msg_text.find_deleted_media)
+        await app.send_cached_media(channel.channel_id, media.file_id, media.caption)
+        MediaMessage.delete_media(media.id)
+    except Exception as error:
+        await app.send_message(channel.channel_id, str(error.args))
+
+
 @app.on_deleted_messages()
 @check_delete_msg
 async def delete_message_user(clt: app, msg: types.Message, message: MessageInfo):
 
     channel = ChannelTargetInfo.get(ChannelTargetInfo.user_id == message.user_id)
     try:
-        if message:
+        if message.message_text != 'media':
             if channel is not None:
                 await app.send_message(channel.channel_id, msg_text.find_deleted_message.format(
                     message.full_name, message.datetime, message.message_text))
+        else:
+            await send_media(clt, msg, message.message_id, channel)
     except Exception as error:
         MessageInfo.delete_message(message)
         await app.send_message(chat_id=channel.channel_id, text=str(error.args))
