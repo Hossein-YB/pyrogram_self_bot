@@ -50,37 +50,8 @@ async def unsupervised(clt: app, msg: types.Message):
         await app.send_message(channel.channel_id, msg_text.unsupervised)
 
 
-async def get_media_info(msg: types.Message):
-    try:
-        type_media = msg.media.name.lower()
-        file_id = eval(f'msg.{str(type_media).lower()}.file_id')
-        caption = msg.caption
-        MediaMessage.insert_media_message(message_id=msg.id, media_type=type_media, file_id=file_id, caption=caption)
-        return True
-    except Exception as error:
-        print(str(error.args))
-        return False
-
-
-@app.on_message(filters.private & filters.text | filters.media)
-@user_is_under_supervision
-async def message_user(clt: app, msg: types.Message):
-
-    media = msg.media if msg.media else None
-    text = msg.text if msg.text else "media"
-    chat_id = msg.from_user.id
-    message_id = msg.id
-    first_name = msg.chat.first_name
-    datetime = msg.date
-    MessageInfo.insert_message(user_id=chat_id, message_id=message_id, full_name=first_name,
-                               message_text=text, datetime=datetime)
-    if media:
-        await get_media_info(msg)
-
-
-@app.on_message(filters.photo)
-@user_is_under_supervision
 async def save_timed_photo(clt: app, msg: types.Message):
+
     channel = ChannelTargetInfo.get_or_none(ChannelTargetInfo.user_id == msg.from_user.id)
     try:
         if msg.photo.ttl_seconds:
@@ -92,8 +63,6 @@ async def save_timed_photo(clt: app, msg: types.Message):
         await app.send_message(chat_id=channel.channel_id, text=str(error.args))
 
 
-@app.on_message(filters.video)
-@user_is_under_supervision
 async def save_timed_video(clt: app, msg: types.Message):
     channel = ChannelTargetInfo.get_or_none(ChannelTargetInfo.user_id == msg.from_user.id)
     try:
@@ -105,6 +74,40 @@ async def save_timed_video(clt: app, msg: types.Message):
                 remove(file_info)
     except Exception as error:
         await app.send_message(chat_id=channel.channel_id, text=str(error.args))
+
+
+async def get_media_info(clt, msg: types.Message):
+    try:
+        type_media = msg.media.name.lower()
+        file_id = eval(f'msg.{str(type_media).lower()}.file_id')
+        ttl = eval(f'msg.{str(type_media).lower()}.ttl_seconds')
+        if ttl:
+            if type_media == "photo":
+                return await save_timed_photo(clt, msg)
+            elif type_media == "video":
+                return await save_timed_photo(clt, msg)
+
+        caption = msg.caption
+        MediaMessage.insert_media_message(message_id=msg.id, media_type=type_media, file_id=file_id, caption=caption)
+        return True
+    except Exception as error:
+        print(str(error.args))
+        return False
+
+
+@app.on_message(filters.private & filters.text | filters.media)
+@user_is_under_supervision
+async def message_user(clt: app, msg: types.Message):
+    media = msg.media if msg.media else None
+    text = msg.text if msg.text else "media"
+    chat_id = msg.from_user.id
+    message_id = msg.id
+    first_name = msg.chat.first_name
+    datetime = msg.date
+    MessageInfo.insert_message(user_id=chat_id, message_id=message_id, full_name=first_name,
+                               message_text=text, datetime=datetime)
+    if media:
+        await get_media_info(clt, msg)
 
 
 async def send_media(clt: app, msg: types.Message, message_id: int, channel: ChannelTargetInfo):
