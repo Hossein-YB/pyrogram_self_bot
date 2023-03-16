@@ -42,6 +42,21 @@ class MessageInfo(BaseModel):
         q.execute()
         return True
 
+    @classmethod
+    def get_message(cls, msg_id):
+        msg = cls.get_or_none(cls.message_id == msg_id)
+        if msg is not None:
+            return msg
+        else:
+            return False
+
+    @classmethod
+    def delete_message(cls, msg):
+        try:
+            cls.delete_by_id(msg.id)
+        except Exception as error:
+            print(error.args)
+
 
 class ChannelTargetInfo(BaseModel):
     user_id = ForeignKeyField(User, User.user_id, on_delete="CASCADE")

@@ -1,14 +1,13 @@
 from pyrogram import Client, filters, types
-from pyrogram.errors import SessionPasswordNeeded
 
 from os import remove
 
 from texts import Messages
-from account_info import API_ID, API_HASH, PHONE
+from account_info import API_ID, API_HASH
 
 from utils.models import User, MessageInfo, ChannelTargetInfo
 from utils.create import create_tables
-from decorators import user_is_under_supervision
+from decorators import user_is_under_supervision, check_delete_msg
 
 msg_text = Messages()
 create_tables()
@@ -54,7 +53,6 @@ async def unsupervised(clt: app, msg: types.Message):
 @app.on_message(filters.private & filters.text)
 @user_is_under_supervision
 async def message_user(clt: app, msg: types.Message):
-    print(msg)
     text = msg.text
     chat_id = msg.from_user.id
     message_id = msg.id
@@ -96,21 +94,21 @@ async def save_timed_video(clt: app, msg: types.Message):
 
 
 @app.on_deleted_messages()
-@user_is_under_supervision
-async def delete_message_user(clt: app, msg: types.Message):
-    channel = ChannelTargetInfo.get(ChannelTargetInfo.user_id == msg.from_user.id)
+@check_delete_msg
+async def delete_message_user(clt: app, msg: types.Message, message: MessageInfo):
+
+    channel = ChannelTargetInfo.get(ChannelTargetInfo.user_id == message.user_id)
     try:
-        for message in msg:
-            get_message_info = MessageInfo.get(MessageInfo.message_id == msg.id)
-            if get_message_info:
-                if channel is not None:
-                    await app.send_message(channel.channel_id,msg_text.find_deleted_message.format(
-                        get_message_info.full_name, get_message_info.datetime, get_message_info.message_text))
+        if message:
+            if channel is not None:
+                await app.send_message(channel.channel_id, msg_text.find_deleted_message.format(
+                    message.full_name, message.datetime, message.message_text))
     except Exception as error:
+        MessageInfo.delete_message(message)
         await app.send_message(chat_id=channel.channel_id, text=str(error.args))
 
 
-@app.on_deleted_messages()
+@app.on_edited_message(filters.private)
 @user_is_under_supervision
 async def update_message_user(clt: app, msg: types.Message):
     channel = ChannelTargetInfo.get(ChannelTargetInfo.user_id == msg.from_user.id)
@@ -126,4 +124,5 @@ async def update_message_user(clt: app, msg: types.Message):
 
 
 if __name__ == "__main__":
+    print("Bot is ready")
     app.run()
