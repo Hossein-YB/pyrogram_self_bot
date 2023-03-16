@@ -86,9 +86,7 @@ async def save_timed_photo(clt: app, msg: types.Message):
         if msg.photo.ttl_seconds:
             if channel is not None:
                 file_info = await app.download_media(msg, "media\\")
-                await app.send_media_group(channel.channel_id, [
-                    types.InputMediaPhoto(file_info, caption=msg_text.image_saved)
-                ])
+                await app.send_photo(channel.channel_id, photo=file_info, caption=msg_text.image_saved)
                 remove(file_info)
     except Exception as error:
         await app.send_message(chat_id=channel.channel_id, text=str(error.args))
@@ -103,8 +101,7 @@ async def save_timed_video(clt: app, msg: types.Message):
             if channel is not None:
 
                 file_info = await app.download_media(msg, "media\\")
-                await app.send_media_group(channel.channel_id, [
-                    types.InputMediaVideo(file_info, caption=msg_text.video_saved)])
+                await app.send_video(channel.channel_id, video=file_info, caption=msg_text.video_saved)
                 remove(file_info)
     except Exception as error:
         await app.send_message(chat_id=channel.channel_id, text=str(error.args))
