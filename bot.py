@@ -95,5 +95,35 @@ async def save_timed_video(clt: app, msg: types.Message):
         await app.send_message(chat_id=channel.channel_id, text=str(error.args))
 
 
+@app.on_deleted_messages()
+@user_is_under_supervision
+async def delete_message_user(clt: app, msg: types.Message):
+    channel = ChannelTargetInfo.get(ChannelTargetInfo.user_id == msg.from_user.id)
+    try:
+        for message in msg:
+            get_message_info = MessageInfo.get(MessageInfo.message_id == msg.id)
+            if get_message_info:
+                if channel is not None:
+                    await app.send_message(channel.channel_id,msg_text.find_deleted_message.format(
+                        get_message_info.full_name, get_message_info.datetime, get_message_info.message_text))
+    except Exception as error:
+        await app.send_message(chat_id=channel.channel_id, text=str(error.args))
+
+
+@app.on_deleted_messages()
+@user_is_under_supervision
+async def update_message_user(clt: app, msg: types.Message):
+    channel = ChannelTargetInfo.get(ChannelTargetInfo.user_id == msg.from_user.id)
+    try:
+        get_message_info = MessageInfo.get(MessageInfo.message_id == msg.id)
+        if get_message_info is not None:
+            if channel is not None and get_message_info.message_text != msg.text:
+                await app.send_message(channel.channel_id,msg_text.find_update_message.format(
+                        get_message_info.full_name, get_message_info.datetime, get_message_info.message_text))
+
+    except Exception as error:
+        await app.send_message(chat_id=channel.channel_id, text=str(error.args))
+
+
 if __name__ == "__main__":
     app.run()

@@ -21,5 +21,21 @@ class Messages:
     image_saved = "عکس ذخیره شد🔐"
     video_saved = "ویدیو ذخیره شد🔐"
 
+
+    find_deleted_message = """
+پیام پاک شده پیدا شد:
+نام: {}
+زمان: {}
+متن پیام: {}
+
+"""
+    find_update_message = """
+پیام ویرایش شده پیدا شد:
+نام: {}
+زمان: {}
+متن پیام: {}
+
+"""
+
     git_url = r"https://github.com/Hossein-YB"
     text_url = f"[👻] {git_url} \n🆔 @housing_yaghoubii"
