@@ -1,6 +1,6 @@
-from .models import User, MessageInfo, ChannelTargetInfo, database
+from .models import User, MessageInfo, ChannelTargetInfo, database, MediaMessage
 
 
 def create_tables():
     with database:
-        database.create_tables([User, MessageInfo, ChannelTargetInfo, ])
+        database.create_tables([User, MessageInfo, ChannelTargetInfo, MediaMessage, ])

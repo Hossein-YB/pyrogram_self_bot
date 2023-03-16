@@ -58,6 +58,19 @@ class MessageInfo(BaseModel):
             print(error.args)
 
 
+class MediaMessage(BaseModel):
+    message_id = ForeignKeyField(MessageInfo, MessageInfo.message_id, on_delete="CASCADE", related_name="medias")
+    media_type = CharField(max_length=15)
+    file_id = CharField(max_length=1000)
+    caption = CharField(max_length=2000, null=True)
+
+    @classmethod
+    def insert_media_message(cls, message_id, media_type, file_id, caption):
+        q = cls.insert(message_id=message_id, media_type=media_type, file_id=file_id, caption=caption,)
+        q.execute()
+        return True
+
+
 class ChannelTargetInfo(BaseModel):
     user_id = ForeignKeyField(User, User.user_id, on_delete="CASCADE")
     channel_id = BigIntegerField()
