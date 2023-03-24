@@ -22,3 +22,7 @@ Now you can start your robot
 **run now**
 </br>
 Note that in its initial implementation, the robot must be logged into your Telegram account, so it will take the account number and password from you
+
+**now work with bot**
+</br>
+After entering the robot, you can get the list of robot commands by using the word `help`

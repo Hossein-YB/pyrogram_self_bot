@@ -66,5 +66,6 @@ https://t.me/c/1111111111/56
 """
     find_deleted_media = "یک رسانه حذف شده پیدا شد "
     is_not_media = "این یک رسانه نیست"
+    
     git_url = r"https://github.com/Hossein-YB"
     text_url = f"[👻] {git_url} \n🆔 @hossein_yaghoubii"
