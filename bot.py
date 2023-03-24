@@ -4,6 +4,7 @@ from os import remove
 
 from texts import Messages
 from account_info import API_ID, API_HASH
+from tools import convert_chat_id, get_media_file_id
 
 from utils.models import User, MessageInfo, ChannelTargetInfo, MediaMessage
 from utils.create import create_tables
@@ -12,12 +13,40 @@ from decorators import user_is_under_supervision, check_delete_msg
 msg_text = Messages()
 create_tables()
 app = Client("app", API_ID, API_HASH)
+path_download = 'media/'
 
 
 @app.on_message(filters.me & filters.private & filters.regex("^help$"))
 async def command(clt: app, msg: types.Message):
     await msg.reply(msg_text.help_msg)
 
+
+async def send_file(file_id, chat_id):
+    try:
+        await app.send_document(chat_id, file_id)
+        return True
+    except Exception as error:
+        return False
+
+
+@app.on_message(filters.me & filters.private & filters.regex("^(دانلود|dnd)\n(https|http|t.me/)"))
+async def command(clt: app, msg: types.Message):
+    message_send_from = msg.chat.id
+    url = msg.text.split('\n')[1]
+    url = url.split('/')
+    chat_id, msg_id = convert_chat_id(url[-2]), int(url[-1])
+    message = await app.get_messages(chat_id=chat_id, message_ids=msg_id)
+    file_info = get_media_file_id(message)
+    if file_info:
+        res = await send_file(file_info['file_id'], message_send_from)
+        if res is False:
+            file_loc = await app.download_media(message, path_download)
+            await app.send_document(message_send_from, file_loc)
+            remove(file_loc)
+        else:
+            return True
+    else:
+        await msg.reply(msg_text.is_not_media)
 
 @app.on_message(filters.me & filters.private & filters.regex("^نظارت$"))
 async def supervision(clt: app, msg: types.Message):
@@ -51,12 +80,11 @@ async def unsupervised(clt: app, msg: types.Message):
 
 
 async def save_timed_photo(clt: app, msg: types.Message):
-
     channel = ChannelTargetInfo.get_or_none(ChannelTargetInfo.user_id == msg.from_user.id)
     try:
         if msg.photo.ttl_seconds:
             if channel is not None:
-                file_info = await app.download_media(msg, "media\\")
+                file_info = await app.download_media(msg, path_download)
                 await app.send_photo(channel.channel_id, photo=file_info, caption=msg_text.image_saved)
                 remove(file_info)
     except Exception as error:
@@ -69,7 +97,7 @@ async def save_timed_video(clt: app, msg: types.Message):
         if msg.video.ttl_seconds:
             if channel is not None:
 
-                file_info = await app.download_media(msg, "media\\")
+                file_info = await app.download_media(msg, path_download)
                 await app.send_video(channel.channel_id, video=file_info, caption=msg_text.video_saved)
                 remove(file_info)
     except Exception as error:
