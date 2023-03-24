@@ -4,7 +4,7 @@ from os import remove
 
 from texts import Messages
 from account_info import API_ID, API_HASH
-from tools import convert_chat_id, get_media_file_id
+from tools import get_chat_and_message_id, get_media_file_id
 
 from utils.models import User, MessageInfo, ChannelTargetInfo, MediaMessage
 from utils.create import create_tables
@@ -32,9 +32,7 @@ async def send_file(file_id, chat_id):
 @app.on_message(filters.me & filters.private & filters.regex("^(دانلود|dnd)\n(https|http|t.me/)"))
 async def command(clt: app, msg: types.Message):
     message_send_from = msg.chat.id
-    url = msg.text.split('\n')[1]
-    url = url.split('/')
-    chat_id, msg_id = convert_chat_id(url[-2]), int(url[-1])
+    chat_id, msg_id = get_chat_and_message_id(msg)
     message = await app.get_messages(chat_id=chat_id, message_ids=msg_id)
     file_info = get_media_file_id(message)
     if file_info:
@@ -47,6 +45,14 @@ async def command(clt: app, msg: types.Message):
             return True
     else:
         await msg.reply(msg_text.is_not_media)
+
+
+@app.on_message(filters.me & filters.private & filters.regex("^کپی"))
+async def supervision(clt: app, msg: types.Message):
+    chat_id, msg_id = get_chat_and_message_id(msg)
+    message = await app.get_messages(chat_id=chat_id, message_ids=msg_id)
+    await msg.reply(message.text)
+
 
 @app.on_message(filters.me & filters.private & filters.regex("^نظارت$"))
 async def supervision(clt: app, msg: types.Message):
